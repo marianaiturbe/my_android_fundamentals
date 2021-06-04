@@ -20,6 +20,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
@@ -99,16 +100,27 @@ class GameFragment : Fragment() {
                         setQuestion()
                         binding.invalidateAll()
                     } else {
+                        //When using safe args
                         view.findNavController()
-                                .navigate(R.id.action_gameFragment_to_gameWonFragment)
+                                .navigate(GameFragmentDirections.actionGameFragmentToGameWonFragment(numQuestions,questionIndex))
+                        //if not using safe args
+                        //view.findNavController()
+                          //      .navigate(R.id.action_gameFragment_to_gameWonFragment)
                         // We've won!  Navigate to the gameWonFragment.
                     }
                 } else {
-                    view.findNavController().navigate(R.id.action_gameFragment_to_gameOverFragment)
+                    view.findNavController()
+                            .navigate(GameFragmentDirections.actionGameFragmentToGameOverFragment())
+                    //view.findNavController().navigate(R.id.action_gameFragment_to_gameFragment)
                     // Game over! A wrong answer sends us to the gameOverFragment.
                 }
             }
         }
+
+        // Using directions to navigate to the GameWonFragment
+
+        val message = Toast.makeText(context,"poop",  Toast.LENGTH_LONG)
+        message.show()
         return binding.root
     }
 
