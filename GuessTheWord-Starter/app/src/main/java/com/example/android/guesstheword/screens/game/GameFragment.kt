@@ -17,11 +17,16 @@
 package com.example.android.guesstheword.screens.game
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
+import androidx.navigation.fragment.NavHostFragment
 import com.example.android.guesstheword.R
 import com.example.android.guesstheword.databinding.GameFragmentBinding
 
@@ -30,16 +35,9 @@ import com.example.android.guesstheword.databinding.GameFragmentBinding
  */
 class GameFragment : Fragment() {
 
-    // The current word
-    private var word = ""
-
-    // The current score
-    private var score = 0
-
-    // The list of words - the front of the list is the next word to guess
-    private lateinit var wordList: MutableList<String>
-
     private lateinit var binding: GameFragmentBinding
+    //Associate GameViewModel with the game fragment
+    private lateinit var viewModel: GameViewModel
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
                               savedInstanceState: Bundle?): View? {
@@ -51,14 +49,37 @@ class GameFragment : Fragment() {
                 container,
                 false
         )
+        //Initialize the ViewModel, using the ViewModelProvider.get() method to create a ViewModelProvider:
+        Log.i("GameFragment", "Called ViewModelProvider.get")
+        viewModel = ViewModelProvider(this).get(GameViewModel::class.java)
 
-        resetList()
-        nextWord()
 
+        /** Setting up LiveData observation relationship **/
+      /*  viewModel.score.observe(viewLifecycleOwner, Observer { newScore ->
+            binding.scoreText.text = newScore.toString()
+        }) */
+
+        /** Setting up LiveData observation relationship **/
+      /*  viewModel.word.observe(viewLifecycleOwner, Observer { newWord ->
+            binding.wordText.text = newWord
+        })*/
+
+        // Observer for the Game finished event
+        viewModel.eventGameFinish.observe(viewLifecycleOwner, Observer<Boolean> { hasFinished ->
+            if (hasFinished) gameFinished()
+        })
+        /* dont need this beacause we now use Live Data Binding*/
+        /*
         binding.correctButton.setOnClickListener { onCorrect() }
         binding.skipButton.setOnClickListener { onSkip() }
-        updateScoreText()
-        updateWordText()
+        binding.endGameButton.setOnClickListener{onEndGame()}*/
+       // updateScoreText()
+        //updateWordText()
+        // Set the viewmodel for databinding - this allows the bound layout access
+// to all the data in the ViewModel
+        binding.gameViewModel = viewModel
+        binding.lifecycleOwner = viewLifecycleOwner
+
         return binding.root
 
     }
@@ -66,65 +87,46 @@ class GameFragment : Fragment() {
     /**
      * Resets the list of words and randomizes the order
      */
-    private fun resetList() {
-        wordList = mutableListOf(
-                "queen",
-                "hospital",
-                "basketball",
-                "cat",
-                "change",
-                "snail",
-                "soup",
-                "calendar",
-                "sad",
-                "desk",
-                "guitar",
-                "home",
-                "railway",
-                "zebra",
-                "jelly",
-                "car",
-                "crow",
-                "trade",
-                "bag",
-                "roll",
-                "bubble"
-        )
-        wordList.shuffle()
-    }
+
 
     /** Methods for buttons presses **/
-
+/**Not needed with live data binding**/
+/*
     private fun onSkip() {
-        score--
-        nextWord()
+        viewModel.onSkip()
+       // updateWordText()
+       // updateScoreText()
     }
 
     private fun onCorrect() {
-        score++
-        nextWord()
+        viewModel.onCorrect()
+     //   updateScoreText()
+     //   updateWordText()
     }
 
-    /**
-     * Moves to the next word in the list
-     */
-    private fun nextWord() {
-        if (!wordList.isEmpty()) {
-            //Select and remove a word from the list
-            word = wordList.removeAt(0)
-        }
-        updateWordText()
-        updateScoreText()
+    private fun onEndGame(){
+    gameFinished()
     }
-
-
+*/
     /** Methods for updating the UI **/
 
     private fun updateWordText() {
-        binding.wordText.text = word
+        binding.wordText.text = viewModel.word.value
     }
 
     private fun updateScoreText() {
-        binding.scoreText.text = score.toString()
+        binding.scoreText.text = viewModel.score.value.toString()
     }
+    /**
+     * Called when the game is finished
+     */
+    private fun gameFinished() {
+        Toast.makeText(activity, "Game has just finished", Toast.LENGTH_SHORT).show()
+        Log.i("GameFragment","game finished!")
+        val action = GameFragmentDirections.actionGameToScore()
+        action.score = viewModel.score.value?:0 // else is shows an int?, int error
+        NavHostFragment.findNavController(this).navigate(action)
+        viewModel.onGameFinishComplete()
+    }
+
 }
